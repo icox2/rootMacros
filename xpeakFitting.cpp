@@ -2,19 +2,20 @@
 #include "TApplication.h"
 #include "TFile.h"
 #include "TTree.h"
-#include "TH1.h"
+#include "TH1F.h"
+#include "TH1D.h"
 #include "TF1.h"
 #include "TROOT.h"
 #include "TCanvas.h"
-#include "TStyle.h"
-#include "TProfile.h"
-#include "TChain.h"
-#include <TTreeReader.h>
-#include <TTreeReaderValue.h>
-#include <TTreeReaderArray.h>
-#include <ProcessorRootStruc.hpp>
+//#include "TStyle.h"
+//#include "TProfile.h"
+//#include "TChain.h"
+//#include <TTreeReader.h>
+//#include <TTreeReaderValue.h>
+//#include <TTreeReaderArray.h>
+//#include <ProcessorRootStruc.hpp>
 
-void xpeakFitting(){
+void xpeakFitting(TH1F *his){
    cout<<"in loop"<<endl;
     int numPeak=0;
     std::cout<<"Enter number of peaks to fit (max 5)."<<std::endl;
@@ -43,14 +44,18 @@ void xpeakFitting(){
     TF1 *g5 = new TF1("m5","gaus",lb[4],ub[4]);
     TF1 *total = new TF1("total","gaus(0)+gaus(3)+gaus(6)+gaus(9)+gaus(12)",lowbound,highbound);
 
-    //std::cout<<"Enter histogram name"<<std::endl;
-    //std::cin>>histName;
-
-    if (numPeak>0) e1->Fit(g1,"R");
-    if (numPeak>1) e1->Fit(g2,"R+");
-    if (numPeak>2) e1->Fit(g3,"R+");
-    if (numPeak>3) e1->Fit(g4,"R+");
-    if (numPeak>4) e1->Fit(g5,"R+");
+	for(int i=0;i<5;i++){
+        total->SetParLimits(3*i+1,lb[i],ub[i]);
+        total->SetParLimits(3*i+2,0.01,100000);
+        //if(i>= numPeak-1)
+            //otal->FixParameters(0.0,0.0,0.0);
+    }
+    
+    if (numPeak>0) his->Fit(g1,"R");
+    if (numPeak>1) his->Fit(g2,"R+");
+    if (numPeak>2) his->Fit(g3,"R+");
+    if (numPeak>3) his->Fit(g4,"R+");
+    if (numPeak>4) his->Fit(g5,"R+");
     
     double par[15] = {0};
     g1->GetParameters(&par[0]);
@@ -66,6 +71,6 @@ void xpeakFitting(){
     if(good){
         total->SetParameters(par);
         total->SetLineColor(30);
-        e1->Fit("total","R+","Q");
+        his->Fit("total","R+","Q");
     }
 }

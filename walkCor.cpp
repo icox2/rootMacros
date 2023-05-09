@@ -9,10 +9,10 @@
 void walkCor(TH2F *his){
     TGraph *w = new TGraph();
 
-    for(int i=1;i<250;i++){
+    for(int i=1;i<1001;i++){
         int bm = his->ProjectionX("",i,i)->GetMaximumBin();
-        double cent = bm *25./250.-35;
-        w->SetPoint(i-1,i*600000./250.,cent);
+        double cent = bm *20./1000.-50;
+        w->SetPoint(i-1,i*600000./1000.,cent);
     }
     TCanvas *c2 = new TCanvas;
     w->Draw();

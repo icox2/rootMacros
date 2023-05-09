@@ -14,13 +14,11 @@
 #include <TTreeReader.h>
 #include <TTreeReaderValue.h>
 #include <TTreeReaderArray.h>
-//#include <ProcessorRootStruc.hpp>
-#include <PaassRootStruct.hpp>
+#include <ProcessorRootStruc.hpp>
 #include <cmath>
-#include <tuple>
 #include "position.h"
 
-std::tuple<double,double,double> pcfdAnalyzer(vector<double> trace, double frac);
+pair<double,double> pcfdAnalyzer(vector<double> trace,double thresh);
 double regCfd(vector<double> &trace);
 double derAnalyzer(vector<double> &trace);
 pair <double, double> baselineCalc(vector<double> trace);
@@ -29,39 +27,39 @@ double fittingAnalyzer(vector<double> trace);
 double gFit(vector<double> trace);
 vector<double> reducer(vector<double> trace);
 double centroid(vector<double> trace);
-TF1 *fit = new TF1("fit","(x>[1])*[0]*exp(([1]-x)/[2])*(1-exp(-1*pow(x-[1],[5])/[3]))+[4]",0,300);
+TF1 *fit = new TF1("fit","[0]*exp(([1]-x)/[2])*(1-exp(-1*pow(x-[1],[5])/[3]))+[4]",0,300);
 TF1 *fpol1 = new TF1("fName1","pol1",0,300);
-TF1 *fpol3 = new TF1("fName3","pol3",0,1);
 TF1 *fpol2 = new TF1("fName2","pol2",0,1);
+TF1 *fpol3 = new TF1("fName3","pol3",0,1);
 TF1 *gauss = new TF1("guass","gaus",0,1);
 
-void timingAnalyzer(){
-  TFile *_file0 = TFile::Open("ysoSingle_DD.root");
-  TTree *GS = (TTree*)_file0->Get("PixTree");
-  TTreeReader singe;
-  cout<<"readermade"<<endl;
-  singe.SetTree( GS );
-  //TTreeReaderArray<processor_struct::ROOTDEV> rd = {singe, "root_dev_vec_"};  //gives vector of stucture 
-  TTreeReaderArray<processor_struct::ROOTDEV> rd = {singe, "rootdev_vec_"};  //gives vector of stucture 
+TFile *newFile = new TFile("gaggLaBr3TimingLong10Amp.root","UPDATE");
+TTree *timing = new TTree("timing","tree filled with traces and energies etc.");
 
-    TH1D *plot1=new TH1D("plot1","plot1",4000.,-100.,100.);
-    TH2D *energy=new TH2D("energy","energy",5000.,0.,10000.,5000.,0.,10000.);
-    TH2D *phase=new TH2D("phase","phase",1000.,80.,105.,1000.,80.,105.);
+void longAnalysis(){
+  TChain ch("PixTree");
+  string prefix = "gagg60CoLaBr3TimingLG10Amp_001-", ending = "_DD.root", fileName;
+  int numfiles = 8;
+  vector<TFile*> _file0;
+  _file0.clear();
+  
+  TH1D *plot1=new TH1D("plot1","plot1",10000.,-2000.,2000.);
+  TH2D *energy=new TH2D("energy","energy",5000.,0.,10000.,5000.,0.,10000.);
+  TH2D *phase=new TH2D("phase","phase",1000.,80.,105.,1000.,80.,105.);
 
     //variables
     int eventNum = 0;
-
     double energyone=0.0, energytwo=0.0, energythree=0.0;
-    vector<double> traceone, tracetwo, tracethree, xatrace, xbtrace, yatrace, ybtrace;
-    vector<unsigned int> tone, ttwo, tthree, xat, xbt, yat, ybt;
+    vector<double> traceone, tracetwo, xatrace, xbtrace, yatrace, ybtrace;
+    vector<unsigned int> tone, ttwo, xat, xbt, yat, ybt;
     int ione=0, itwo=0, ithree=0, twocount=0;
     double hrTimeone=0.0, hrTimetwo=0.0, hrTimethree=0.0;
     double cfdTimeone=0.0, cfdTimetwo=0.0, cfdTimethree=0.0;
-    double phaseone=0.0, phasetwo=0., tmaxone=0., tmaxtwo=0.;
+    double phaseone=0.0, phasetwo=0.0, tmaxone=0., tmaxtwo=0.;
     double timeone=0.0, timetwo=0.0, timethree=0.0;
     double qdcone=0.0, qdctwo=0.0;
-    double tdiff=0.0, baselineone=0.0, baselinetwo=0.0, sigmaone=0., sigmatwo=0.;
-    double ecaltwo=0.0, slopeone=0., slopetwo=0.;
+    double tdiff=0.0, baselineone=0.0, baselinetwo=0.0;
+    double ecaltwo=0.0;
     int maxvalone=0, maxvaltwo=0;
     double xa=0., xb=0., ya=0., yb=0.;
     double xaqdc=0., xbqdc=0., yaqdc=0., ybqdc=0.;
@@ -69,31 +67,25 @@ void timingAnalyzer(){
     double xposq=0., yposq=0.;
     double xpost=0., ypost=0.;
 
-  TFile *newFile = new TFile("ysoTraces.root","RECREATE");
-  TTree *timing = new TTree("timing","tree filled with traces and energies etc.");
-
   timing->Branch("eventNum", &eventNum);
-  timing->Branch("energyone", &energyone);
+  /*timing->Branch("energyone", &energyone);
   timing->Branch("energytwo", &energytwo);
   timing->Branch("energythree", &energythree);
-  timing->Branch("energycal", &ecaltwo);
-  timing->Branch("traceone", &traceone);
-  timing->Branch("tracetwo", &tracetwo);
-  timing->Branch("tracethree", &tracethree);
-  timing->Branch("ione", &ione);
+  timing->Branch("energycal", &ecaltwo);*/
+  //timing->Branch("traceone", &traceone);
+  //timing->Branch("tracetwo", &tracetwo);
+  /*timing->Branch("ione", &ione);
   timing->Branch("itwo", &itwo);
   timing->Branch("hrTimeone", &hrTimeone);
   timing->Branch("hrTimetwo", &hrTimetwo);
   timing->Branch("cfdTimeone", &cfdTimeone);
-  timing->Branch("cfdTimetwo", &cfdTimetwo);
+  timing->Branch("cfdTimetwo", &cfdTimetwo);*/
   timing->Branch("phaseone", &phaseone);
   timing->Branch("phasetwo", &phasetwo);
-  timing->Branch("slopeone", & slopeone);
-  timing->Branch("slopetwo", & slopetwo);
-  timing->Branch("timeone", &timeone);
+  /*timing->Branch("timeone", &timeone);
   timing->Branch("timetwo", &timetwo);
   timing->Branch("tmaxone", &tmaxone);
-  timing->Branch("tmaxtwo", &tmaxtwo);
+  timing->Branch("tmaxtwo", &tmaxtwo);*/
   timing->Branch("qdcone", &qdcone);
   timing->Branch("qdctwo", &qdctwo);
   timing->Branch("tdiff", &tdiff);
@@ -101,35 +93,49 @@ void timingAnalyzer(){
   timing->Branch("yposq", &yposq);
   timing->Branch("xpost", &xpost);
   timing->Branch("ypost", &ypost);
-  timing->Branch("bone", &baselineone);
-  timing->Branch("btwo", &baselinetwo);
-  timing->Branch("sone", &sigmaone);
-  timing->Branch("stwo", &sigmatwo);
+  //timing->Branch("bone", &baselineone);
+  //timing->Branch("btwo", &baselinetwo);
 
-  fit->SetParLimits(0,500,50000);
-  fit->SetParLimits(2,5,70);
-  fit->SetParLimits(3,40,200);
-  //fit->SetParLimits(5,1.0,1.8); //power for fit
-  fit->FixParameter(5,4.);
+  for(int i=0;i<=numfiles;i++){
+    /*if(i<10)
+      fileName = prefix+"00"+i+ending;
+    else if(i<100)
+      fileName = prefix+"0"+i+ending;
+    else*/
+      fileName = prefix+i+ending;
+    _file0.emplace_back(TFile::Open(fileName.c_str()));
+    cout<<endl<<fileName<<endl;
 
-  std::vector<unsigned int> *trace;
-  while(singe.Next()){
+    TTree *GS = (TTree*)_file0.at(i)->Get("PixTree");
+    TTreeReader singe;
+    singe.SetTree( GS );
+    TTreeReaderArray<processor_struct::ROOTDEV> rd = {singe, "root_dev_vec_"};  //gives vector of stucture 
+    cout<<"readermade"<<endl;
+
+    newFile->cd();
+
+    fit->SetParLimits(0,500,50000);
+    fit->SetParLimits(2,5,70);
+    fit->SetParLimits(3,40,200);
+    fit->SetParLimits(5,1.0,1.8); //power for fit
+    std::vector<unsigned int> *trace;
+    while(singe.Next()){
 
     if(eventNum%1000==0) cout<<"\r" << eventNum<< flush;
-    tone.clear(); ttwo.clear(); tthree.clear();
+    tone.clear(); ttwo.clear();
     traceone.clear();
-    tracetwo.clear(); tracethree.clear();
+    tracetwo.clear();
     xat.clear(); xbt.clear(); yat.clear(); ybt.clear();
     xatrace.clear(); xbtrace.clear();
     yatrace.clear(); ybtrace.clear();
     ione=0; itwo=0; ithree=0;
     hrTimeone=0.0; hrTimetwo=0.0; hrTimethree=0.0;
-    energyone= -1000.0; energytwo= -1000.0; energythree= -1000.0;
+    energyone=-1000.0; energytwo=-1000.0; energythree=-1000.0;
     cfdTimeone=0.0; cfdTimetwo=0.0; cfdTimethree=0.;
-    phaseone=0.0; phasetwo=0.0; slopeone=0.; slopetwo=0.;
+    phaseone=0.0; phasetwo=0.0;
     timeone=0.0; timetwo=0.0, timethree=0.0;
-    tmaxone=0.0; tmaxtwo=0.0; tdiff=0.0;
-    ecaltwo=0.0; baselineone=0.0; baselinetwo=0.0; sigmaone=0; sigmatwo=0;
+    tmaxone=0.; tmaxtwo=0.; tdiff=0.0;
+    ecaltwo=0.0; baselineone=0.0; baselinetwo=0.0;
     qdcone=0.0;qdctwo=0.0;
     maxvalone=0;maxvaltwo=0;
     xa=0; xb=0.; ya=0.; yb=0.;
@@ -148,32 +154,30 @@ void timingAnalyzer(){
         int channel = itC->chanNum; 
         int module = itC->modNum;
         int maxValue = itC->maxVal;
-        if(eventNum==0) cout<<trace->size()<<" "<<channel<<endl;
+        if(eventNum==0) cout<<trace->size()<<" "<<channel<<" "<<eventNum<<endl;
 
-        if (channel==0 && module==1){ 
+        if (channel==4){ 
             ione++;
             tone = *trace;
             double hold =0.0;
             for(int i=0;i<tone.size();i++){
               hold = (double) tone[i];
               traceone.push_back(hold);
-              if(traceone[tmaxone]<=traceone[i]) tmaxone=i;
+              //if(traceone[tmaxone]<=traceone[i]) tmaxone=i;
             }
             //for(int i=0;i<traceone.size()-2;i++)traceone[i] = (traceone[i]+traceone[i+1])/2;
             energyone = energy;
             hrTimeone = highResTime;
             cfdTimeone = time;
             timeone = time;
-            maxvalone = traceone[tmaxone];
+            maxvalone = maxValue;
             //phaseone = cdfAnalyzer(traceone);
             //cfdTimeone += 2*phaseone;
             qdcone = traceAnalyzer(traceone);
-            auto baselineVals = baselineCalc(traceone);
-            baselineone = baselineVals.first;
-            sigmaone = baselineVals.second;
+            baselineone = baselineCalc(traceone).first;
         }
 
-        else if(channel==12 && module==0){ //external trig
+        else if(channel==5){ //hagrid
             itwo++;
             ttwo = *trace;
             double hold =0;
@@ -191,25 +195,16 @@ void timingAnalyzer(){
             //phasetwo = cdfAnalyzer(tracetwo);
             //cfdTimetwo += 2*phasetwo;
             qdctwo = traceAnalyzer(tracetwo);
-            auto baselineVals = baselineCalc(tracetwo);
-            baselinetwo = baselineVals.first;
-            sigmatwo = baselineVals.second;
+            baselinetwo = baselineCalc(tracetwo).first;
         }
-        else if(channel==13 && module==0){ //hagrid
+        else if(channel==6){ //hagrid
             ithree++;
-            tthree = *trace;
-            double hold =0;
-            for(int i=0;i<tthree.size();i++){
-              hold = (double) tthree[i];
-              tracethree.push_back(hold);
-            }
             energythree = energy;
-            //qdcone = traceAnalyzer(tracethree);
             hrTimethree = highResTime;
             //cfdTimethree = time;
         }
 
-        else if(channel==0 && module==1){
+        else if(channel==0){ 
           xat = *trace;
           double hold =0;
           for(int i=0;i<xat.size();i++){
@@ -220,7 +215,7 @@ void timingAnalyzer(){
           xa = energy;
           xaqdc = traceAnalyzer(xatrace);
         }
-        else if(channel==1 && module==1){ 
+        else if(channel==1){ 
           xbt = *trace;
           double hold =0;
           for(int i=0;i<xbt.size();i++){
@@ -231,7 +226,7 @@ void timingAnalyzer(){
           xb = energy;
           xbqdc = traceAnalyzer(xbtrace);
         }
-        else if(channel==2 && module==1){ 
+        else if(channel==2){ 
           yat = *trace;
           double hold =0;
           for(int i=0;i<yat.size();i++){
@@ -242,7 +237,7 @@ void timingAnalyzer(){
           ya = energy;
           yaqdc = traceAnalyzer(yatrace);
         }
-        else if(channel==3 && module==1){ 
+        else if(channel==3){ 
           ybt = *trace;
           double hold =0;
           for(int i=0;i<ybt.size();i++){
@@ -254,73 +249,72 @@ void timingAnalyzer(){
           ybqdc = traceAnalyzer(ybtrace);
         }
     }
-    if((ione>0 && itwo>0) || maxvalone>4000){
-      std::tuple<double,double,double> result = pcfdAnalyzer(traceone,0.1);
-      //phaseone = 4*fittingAnalyzer(traceone);
-      phaseone = 4*(std::get<0>(result));
-      tmaxone = std::get<1>(result);
-      slopeone = std::get<2>(result);
-      cfdTimeone += phaseone;
-      result = pcfdAnalyzer(tracetwo,0.1);
-      phasetwo = 4*(std::get<0>(result));
-      tmaxtwo = std::get<1>(result);
-      slopetwo = std::get<2>(result);
-      cfdTimetwo += phasetwo;
-      tdiff = cfdTimeone-phaseone-cfdTimetwo+phaseone;
-      ecaltwo = 0.09369787313*energytwo-1.639424969;
-      pair<double,double> posq = position(xaqdc,xbqdc,yaqdc,ybqdc);
-      pair<double,double> post = position(xa,xb,ya,yb);
-      xposq = posq.first;
-      yposq = posq.second;
-      xpost = post.first;
-      ypost = post.second;
-      //plot1->Fill(tdiff);
+    if(ione>0 && itwo>0){
+      if(1){
+        phaseone = 2*pcfdAnalyzer(traceone,0.45).first;
+        tmaxone = pcfdAnalyzer(traceone,0.45).second;
+        cfdTimeone += phaseone;
+        phasetwo = 2*pcfdAnalyzer(tracetwo,0.45).first;
+        tmaxtwo = pcfdAnalyzer(tracetwo,0.45).second;
+        cfdTimetwo += phasetwo;
+        tdiff = cfdTimeone-phaseone-cfdTimetwo+phaseone;
+        ecaltwo = 0.09369787313*energytwo-1.639424969;
+        xposq = position(xaqdc,xbqdc,yaqdc,ybqdc).first;
+        yposq = position(xaqdc,xbqdc,yaqdc,ybqdc).second;
+        xpost = position(xatm,xbtm,yatm,ybtm).first;
+        ypost = position(xatm,xbtm,yatm,ybtm).second;
+      }
+
+      //plot1->Fill(cfdTimeone-cfdTimetwo);
       //energy->Fill(energyone,energytwo);
       //phase->Fill(phaseone,phasetwo);
+      newFile->cd();
       timing->Fill();
+      //cout<<"Phase calculations "<<eventNum<<endl;
     }
     eventNum++;
   }
-  timing->Write();
+  newFile->cd();
+  timing->Write("", TObject::kOverwrite);
   //plot1->Write();
   //phase->Write();
   //energy->Write();
-  cout<<endl;
+  _file0.at(i-1)->Close();
+  }
 }
 
-std::tuple<double,double,double> pcfdAnalyzer(vector<double> trace, double frac){
+pair<double,double> pcfdAnalyzer(vector<double> trace,double thresh){
   int maxPos=0;
   vector<double>::iterator it;
   TGraph *fTraces = new TGraph();
   double fmax=0.0;
   double pmax=0.0;
-  double baseline=834.;
-  double thresh=0.0;
+  double baseline=0.0;
+  //double thresh=0.0;
   double phase=0.0;
-  std::pair <double,double> points(0.,0.);
+  std::pair <double,double> points(0,0);
 
   if(trace.size()>10){
     it = max_element(trace.begin(),trace.end());
     maxPos = distance(trace.begin(),it);
   }
   else{
-    return make_tuple(-9999.,-9999.,-9999.);
+    return make_pair(-9999.,-9999.);
   }
   for (int iv = 0;iv<trace.size();iv++){
     fTraces->SetPoint(iv, iv, trace.at(iv));
   }
   
-  std::pair <double, double> range((maxPos-2),(maxPos+1));
-  fpol3->SetRange(range.first,range.second);
-  fTraces->Fit(fpol3,"RNQSW");
-  if(!(fpol3->IsValid()))return make_tuple(-5555.,-5555.,-5555.);
-  fmax = fpol3->GetMaximum(range.first,range.second);
+  std::pair <double, double> range((maxPos-1),(maxPos+1));
+  fpol2->SetRange(range.first,range.second);
+  fTraces->Fit(fpol2,"RNQSW");
+  if(!(fpol2->IsValid()))return make_pair(-5555.,-5555.);
+  fmax = fpol2->GetMaximum(range.first,range.second);
   pmax = trace.at(maxPos);
-  //if(frac>0.11)
   baseline = baselineCalc(trace).first;
   if(pmax<3*baselineCalc(trace).second)cout<<"peak too small "<<baselineCalc(trace).second<<endl;
   //if(maxPos>125)return -7777.;
-  thresh = (fmax-baseline)*frac+baseline; //here frac is the Constant Fraction
+  thresh = (fmax-baseline)*0.5+baseline; //here 0.5 is the Constant Fraction
   for(int i=maxPos;i>0;i--){
     if((trace.at(i)>=thresh) && (trace.at(i-1)<thresh)){
       points.first = i-1;
@@ -330,7 +324,7 @@ std::tuple<double,double,double> pcfdAnalyzer(vector<double> trace, double frac)
   fpol1->SetRange(points.first,points.second);
   fTraces->Fit(fpol1,"RNQSW");
   phase = fpol1->GetX(thresh,points.first,points.second);
-  return make_tuple(phase,fmax-baseline,fpol1->GetParameter(1));
+  return make_pair(phase,fmax-baseline);
 }
 
 double regCfd(vector<double> &trace){
@@ -394,7 +388,7 @@ double derAnalyzer(vector<double> &trace){
   vector<double>::iterator it;
   TGraph *fTraces = new TGraph();
   TGraph *fTraces1 = new TGraph();
-  //TF1 *fpol2 = new TF1("fName2","pol2",0,1);
+  TF1 *fpol2 = new TF1("fName2","pol2",0,1);
   double fmax=0.0;
   double phase=0.0;
   double par[2]={0.0,0.0};
@@ -439,19 +433,18 @@ double derAnalyzer(vector<double> &trace){
 
 pair <double, double> baselineCalc(vector<double> trace){
     //calculating the baseline
-    const int numBins = 20;
     double baseSum = 0.;
-    for(int j=0;j<numBins;j++){
+    for(int j=0;j<20;j++){
         baseSum += trace.at(j);
     }
-    double  baseline = baseSum/(double(numBins));
+    double  baseline = baseSum/20.;
     
     //calculating the standard dev
     double stddev = 0.0;
-    for(int j=0;j<numBins;j++){
-        stddev += pow(trace.at(j)-baseline,2);
+    for(int j=0;j<20;j++){
+        stddev += pow(trace[j]-baseline,2);
     }
-    stddev = sqrt(stddev/(double(numBins)));
+    stddev = sqrt(stddev/20);
     
     return std::make_pair (baseline, stddev);
 }
@@ -486,58 +479,37 @@ double traceAnalyzer(vector<double> trace){
 double fittingAnalyzer(vector<double> trace){
   int maxLoc=0,dMax=0;
   double phase=0.0;
-  if(trace.size()<10) return -9999.;
   double baseline=baselineCalc(trace).first;
-  //TGraph *fTraces = new TGraph();
-  TH1D *hist = new TH1D("hist","trace",250,0.,250.);
+  TGraph *fTraces = new TGraph();
   double fmax=0.0;
   double der=0.0;
   
   double thresh=0.4;
   std::pair <double,double> points(0,0);
 
+  if(trace.size()<10) return -9999.;
 
   //need to determine fitting range..want to start around beginning of rise
-  for(int i=0;i<trace.size();i++){
-    if(trace.at(i)>trace.at(maxLoc)) maxLoc=i;
-    //fTraces->SetPoint(i, i, trace.at(i));
-    if(trace[i+1]-trace[i]>der && i<=maxLoc && i<trace.size()-1){
-      dMax=i; 
-      der = trace[dMax+1]-trace[dMax];
-    }
-    for(int k=0;k<(int)trace.at(i);k++) hist->Fill(double(i));
-  }
+  for(int i=0;i<trace.size();i++)
+    if(trace[i]>trace[maxLoc])maxLoc=i;
 
-  /*for(int i=0;i<trace.size()-1;i++){
+  for(int i=0;i<trace.size()-1;i++){
     //this is taking the derivative to determine the max risetime, which should be on the initial kink up
     if(trace[i+1]-trace[i]>der && i<=maxLoc)dMax=i; 
     der = trace[dMax+1]-trace[dMax];
-  }*/
-  for(int j=0;j<trace.size()-1;j++){
-    double hold=0., temp=0.;
-    temp = trace.at(j+1)-trace.at(j);
-    if(temp>0) hold = temp;
-    else  hold = -0.2*temp;
-    //fTraces->SetPoint(j, 2*j, hold);
-    double weight = hold/der+0.001;
-    //fTraces->SetPoint(j, 2*j,weight);
-    for(int k=0;k<(int)trace.at(j);k++) hist->Fill(double(j));
-    hist->SetBinError(j,1/weight);
+    fTraces->SetPoint(i, i, trace.at(i));
   }
+  fTraces->SetPoint(trace.size()-1, trace.size()-1, trace.at(trace.size()-1));
   
   //general ranges for parameters, to help the fit actually work.
-  //fit->SetParameter(1,dMax);
-  fit->SetParLimits(0,500,50000);
-  fit->SetParLimits(1,dMax-12,dMax);
-  fit->SetParLimits(2,1,100);
-  fit->SetParLimits(3,1,2000);
+  fit->SetParameter(1,dMax);
+  fit->SetParLimits(1,dMax-5,dMax+10);
   fit->FixParameter(4,baseline);
-  fit->FixParameter(5,3);
 
-  std::pair <double, double> range(dMax-20,maxLoc+10);
+  std::pair <double, double> range((dMax-2),dMax+50);
   fit->SetRange(range.first,range.second);
-  hist->Fit(fit,"RNSQW");
-  /*fmax = fit->GetMaximum(range.first,range.second);
+  fTraces->Fit(fit,"RNSQW");
+  fmax = fit->GetMaximum(range.first,range.second);
   //phase = fit->GetX(fmax,range.first,range.second);
   //phase = fit->GetParameter(1);
   phase = fit->GetParameter(1);
@@ -552,10 +524,8 @@ double fittingAnalyzer(vector<double> trace){
   fpol1->SetRange(points.first,points.second);
   fTraces->Fit(fpol1,"RNSQW");
   phase = fpol1->GetX(thresh,points.first,points.second);
-*/
-  delete hist;
-  return fit->GetParameter(1);
-  //return phase;
+
+  return phase;
 }
 
 double gFit(vector<double> trace){

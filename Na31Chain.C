@@ -1,0 +1,34 @@
+{
+	TChain *tree = new TChain("mergedBeta");
+	tree->Add("crate2_run_0237_beta_ion_correlated_Na31CUT.root");   
+	tree->Add("crate2_run_0250_beta_ion_correlated_Na31CUT.root"); 
+	tree->Add("crate2_run_0266_beta_ion_correlated_Na31CUT.root");
+	tree->Add("crate2_run_0238_beta_ion_correlated_Na31CUT.root");   
+	tree->Add("crate2_run_0251_beta_ion_correlated_Na31CUT.root");
+	tree->Add("crate2_run_0267_beta_ion_correlated_Na31CUT.root");
+	tree->Add("crate2_run_0239-1_beta_ion_correlated_Na31CUT.root"); 
+	tree->Add("crate2_run_0252_beta_ion_correlated_Na31CUT.root");
+	tree->Add("crate2_run_0283_beta_ion_correlated_Na31CUT.root");
+	tree->Add("crate2_run_0239-2_beta_ion_correlated_Na31CUT.root");  
+	tree->Add("crate2_run_0255_beta_ion_correlated_Na31CUT.root");
+	tree->Add("crate2_run_0284_beta_ion_correlated_Na31CUT.root");
+	tree->Add("crate2_run_0240_beta_ion_correlated_Na31CUT.root");   
+	tree->Add("crate2_run_0256_beta_ion_correlated_Na31CUT.root");
+	tree->Add("crate2_run_0285_beta_ion_correlated_Na31CUT.root");
+	tree->Add("crate2_run_0241_beta_ion_correlated_Na31CUT.root");   
+	tree->Add("crate2_run_0257_beta_ion_correlated_Na31CUT.root");
+	tree->Add("crate2_run_0286_beta_ion_correlated_Na31CUT.root");
+	tree->Add("crate2_run_0244_beta_ion_correlated_Na31CUT.root");   
+	tree->Add("crate2_run_0259_beta_ion_correlated_Na31CUT.root");
+	tree->Add("crate2_run_0287_beta_ion_correlated_Na31CUT.root");
+	tree->Add("crate2_run_0246_beta_ion_correlated_Na31CUT.root");   
+	tree->Add("crate2_run_0261_beta_ion_correlated_Na31CUT.root");
+	tree->Add("crate2_run_0288_beta_ion_correlated_Na31CUT.root");
+	tree->Add("crate2_run_0247_beta_ion_correlated_Na31CUT.root");   
+	tree->Add("crate2_run_0262_beta_ion_correlated_Na31CUT.root");
+	tree->Add("crate2_run_0296_beta_ion_correlated_Na31CUT.root");
+	tree->Add("crate2_run_0248_beta_ion_correlated_Na31CUT.root");
+	tree->Add("crate2_run_0263_beta_ion_correlated_Na31CUT.root");
+	tree->Add("crate2_run_0249_beta_ion_correlated_Na31CUT.root");
+	tree->Add("crate2_run_0264_beta_ion_correlated_Na31CUT.root");
+}

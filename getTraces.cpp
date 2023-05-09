@@ -20,6 +20,8 @@
 #include <tuple>
 #include "position.h"
 
+void createPileup(vector<double> lasttrace, vector<double> &trace, int phase);
+void normalizeTrace(vector<double> &trace);
 std::tuple<double,double,double> pcfdAnalyzer(vector<double> trace, double frac);
 double regCfd(vector<double> &trace);
 double derAnalyzer(vector<double> &trace);
@@ -33,9 +35,10 @@ TF1 *fit = new TF1("fit","(x>[1])*[0]*exp(([1]-x)/[2])*(1-exp(-1*pow(x-[1],[5])/
 TF1 *fpol1 = new TF1("fName1","pol1",0,300);
 TF1 *fpol3 = new TF1("fName3","pol3",0,1);
 TF1 *fpol2 = new TF1("fName2","pol2",0,1);
-TF1 *gauss = new TF1("guass","gaus",0,1);
+TF1 *gauss = new TF1("gauss","gaus",0,1);
+TRandom2 *randGenerator = new TRandom2(); 
 
-void timingAnalyzer(){
+void getTraces(){
   TFile *_file0 = TFile::Open("ysoSingle_DD.root");
   TTree *GS = (TTree*)_file0->Get("PixTree");
   TTreeReader singe;
@@ -44,99 +47,54 @@ void timingAnalyzer(){
   //TTreeReaderArray<processor_struct::ROOTDEV> rd = {singe, "root_dev_vec_"};  //gives vector of stucture 
   TTreeReaderArray<processor_struct::ROOTDEV> rd = {singe, "rootdev_vec_"};  //gives vector of stucture 
 
-    TH1D *plot1=new TH1D("plot1","plot1",4000.,-100.,100.);
-    TH2D *energy=new TH2D("energy","energy",5000.,0.,10000.,5000.,0.,10000.);
-    TH2D *phase=new TH2D("phase","phase",1000.,80.,105.,1000.,80.,105.);
+  double percentPileup = 0.4;
+  double phaseHigh = 100.;
+  double phaseLow = 2.;
 
-    //variables
-    int eventNum = 0;
+  //variables
+  int eventNum = 0;
 
-    double energyone=0.0, energytwo=0.0, energythree=0.0;
-    vector<double> traceone, tracetwo, tracethree, xatrace, xbtrace, yatrace, ybtrace;
-    vector<unsigned int> tone, ttwo, tthree, xat, xbt, yat, ybt;
-    int ione=0, itwo=0, ithree=0, twocount=0;
-    double hrTimeone=0.0, hrTimetwo=0.0, hrTimethree=0.0;
-    double cfdTimeone=0.0, cfdTimetwo=0.0, cfdTimethree=0.0;
-    double phaseone=0.0, phasetwo=0., tmaxone=0., tmaxtwo=0.;
-    double timeone=0.0, timetwo=0.0, timethree=0.0;
-    double qdcone=0.0, qdctwo=0.0;
-    double tdiff=0.0, baselineone=0.0, baselinetwo=0.0, sigmaone=0., sigmatwo=0.;
-    double ecaltwo=0.0, slopeone=0., slopetwo=0.;
-    int maxvalone=0, maxvaltwo=0;
-    double xa=0., xb=0., ya=0., yb=0.;
-    double xaqdc=0., xbqdc=0., yaqdc=0., ybqdc=0.;
-    double xatm=0., xbtm=0., yatm=0., ybtm=0.;
-    double xposq=0., yposq=0.;
-    double xpost=0., ypost=0.;
+  double energyone=0.0;
+  vector<double> traceone, lasttrace;
+  vector<unsigned int> tone;
+  int ione=0;
+  double hrTimeone=0.0;
+  double cfdTimeone=0.0;
+  double phaseone=0.0, tmaxone=0.;
+  double timeone=0.0;
+  double qdcone=0.;
+  double baselineone=0.0;
+  int maxvalone=0;
+  double phase=0.;
+  bool pileup=0;
 
-  TFile *newFile = new TFile("ysoTraces.root","RECREATE");
+  TFile *newFile = new TFile("ysoTracesNoPileup.root","RECREATE");
   TTree *timing = new TTree("timing","tree filled with traces and energies etc.");
 
-  timing->Branch("eventNum", &eventNum);
-  timing->Branch("energyone", &energyone);
-  timing->Branch("energytwo", &energytwo);
-  timing->Branch("energythree", &energythree);
-  timing->Branch("energycal", &ecaltwo);
-  timing->Branch("traceone", &traceone);
-  timing->Branch("tracetwo", &tracetwo);
-  timing->Branch("tracethree", &tracethree);
-  timing->Branch("ione", &ione);
-  timing->Branch("itwo", &itwo);
-  timing->Branch("hrTimeone", &hrTimeone);
-  timing->Branch("hrTimetwo", &hrTimetwo);
-  timing->Branch("cfdTimeone", &cfdTimeone);
-  timing->Branch("cfdTimetwo", &cfdTimetwo);
-  timing->Branch("phaseone", &phaseone);
-  timing->Branch("phasetwo", &phasetwo);
-  timing->Branch("slopeone", & slopeone);
-  timing->Branch("slopetwo", & slopetwo);
-  timing->Branch("timeone", &timeone);
-  timing->Branch("timetwo", &timetwo);
-  timing->Branch("tmaxone", &tmaxone);
-  timing->Branch("tmaxtwo", &tmaxtwo);
-  timing->Branch("qdcone", &qdcone);
-  timing->Branch("qdctwo", &qdctwo);
-  timing->Branch("tdiff", &tdiff);
-  timing->Branch("xposq", &xposq);
-  timing->Branch("yposq", &yposq);
-  timing->Branch("xpost", &xpost);
-  timing->Branch("ypost", &ypost);
-  timing->Branch("bone", &baselineone);
-  timing->Branch("btwo", &baselinetwo);
-  timing->Branch("sone", &sigmaone);
-  timing->Branch("stwo", &sigmatwo);
-
-  fit->SetParLimits(0,500,50000);
-  fit->SetParLimits(2,5,70);
-  fit->SetParLimits(3,40,200);
-  //fit->SetParLimits(5,1.0,1.8); //power for fit
-  fit->FixParameter(5,4.);
+//  timing->Branch("eventNum", &eventNum);
+  timing->Branch("trace", &traceone);
+  timing->Branch("phase", &phase);
+  timing->Branch("pileup", &pileup);
 
   std::vector<unsigned int> *trace;
   while(singe.Next()){
 
     if(eventNum%1000==0) cout<<"\r" << eventNum<< flush;
-    tone.clear(); ttwo.clear(); tthree.clear();
+    tone.clear();
     traceone.clear();
-    tracetwo.clear(); tracethree.clear();
-    xat.clear(); xbt.clear(); yat.clear(); ybt.clear();
-    xatrace.clear(); xbtrace.clear();
-    yatrace.clear(); ybtrace.clear();
-    ione=0; itwo=0; ithree=0;
-    hrTimeone=0.0; hrTimetwo=0.0; hrTimethree=0.0;
-    energyone= -1000.0; energytwo= -1000.0; energythree= -1000.0;
-    cfdTimeone=0.0; cfdTimetwo=0.0; cfdTimethree=0.;
-    phaseone=0.0; phasetwo=0.0; slopeone=0.; slopetwo=0.;
-    timeone=0.0; timetwo=0.0, timethree=0.0;
-    tmaxone=0.0; tmaxtwo=0.0; tdiff=0.0;
-    ecaltwo=0.0; baselineone=0.0; baselinetwo=0.0; sigmaone=0; sigmatwo=0;
-    qdcone=0.0;qdctwo=0.0;
-    maxvalone=0;maxvaltwo=0;
-    xa=0; xb=0.; ya=0.; yb=0.;
-    xposq=0.; yposq=0.;
-    xpost=0.; ypost=0.;
-    xaqdc=0.; xbqdc=0.; yaqdc=0.; ybqdc=0.;
-    xatm=0.; xbtm=0.; yatm=0.; ybtm=0.;
+//    lasttrace.clear();
+    ione=0;
+    hrTimeone=0.0;
+    energyone= -1000.0;
+    cfdTimeone=0.0;
+    phaseone=0.0;
+    timeone=0.0;
+    tmaxone=0.0;
+    baselineone=0.0;
+    qdcone=0.0;
+    maxvalone=0;
+    phase = -99.;
+    pileup = 0;
 
     for(auto itC = rd.begin(); itC!=rd.end();itC++){
         trace = &(itC->trace);
@@ -170,123 +128,46 @@ void timingAnalyzer(){
             qdcone = traceAnalyzer(traceone);
             auto baselineVals = baselineCalc(traceone);
             baselineone = baselineVals.first;
-            sigmaone = baselineVals.second;
-        }
-
-        else if(channel==12 && module==0){ //external trig
-            itwo++;
-            ttwo = *trace;
-            double hold =0;
-            for(int i=0;i<ttwo.size();i++){
-              hold = (double) ttwo[i];
-              tracetwo.push_back(hold);
-              if(tracetwo[tmaxtwo]<=tracetwo[i]) tmaxtwo=i;
-            }
-            //for(int i=0;i<tracetwo.size()-2;i++)tracetwo[i] = (tracetwo[i]+tracetwo[i+1])/2;
-            energytwo = energy;
-            hrTimetwo = highResTime;
-            cfdTimetwo = time;
-            timetwo = time;
-            maxvaltwo=maxValue;
-            //phasetwo = cdfAnalyzer(tracetwo);
-            //cfdTimetwo += 2*phasetwo;
-            qdctwo = traceAnalyzer(tracetwo);
-            auto baselineVals = baselineCalc(tracetwo);
-            baselinetwo = baselineVals.first;
-            sigmatwo = baselineVals.second;
-        }
-        else if(channel==13 && module==0){ //hagrid
-            ithree++;
-            tthree = *trace;
-            double hold =0;
-            for(int i=0;i<tthree.size();i++){
-              hold = (double) tthree[i];
-              tracethree.push_back(hold);
-            }
-            energythree = energy;
-            //qdcone = traceAnalyzer(tracethree);
-            hrTimethree = highResTime;
-            //cfdTimethree = time;
-        }
-
-        else if(channel==0 && module==1){
-          xat = *trace;
-          double hold =0;
-          for(int i=0;i<xat.size();i++){
-              hold = (double) xat[i];
-              if(hold>xatm) xatm = hold;
-              xatrace.push_back(hold);
-            }
-          xa = energy;
-          xaqdc = traceAnalyzer(xatrace);
-        }
-        else if(channel==1 && module==1){ 
-          xbt = *trace;
-          double hold =0;
-          for(int i=0;i<xbt.size();i++){
-              hold = (double) xbt[i];
-              if(hold>xbtm) xbtm = hold;
-              xbtrace.push_back(hold);
-            }
-          xb = energy;
-          xbqdc = traceAnalyzer(xbtrace);
-        }
-        else if(channel==2 && module==1){ 
-          yat = *trace;
-          double hold =0;
-          for(int i=0;i<yat.size();i++){
-              hold = (double) yat[i];
-              if(hold>yatm) yatm = hold;
-              yatrace.push_back(hold);
-            }
-          ya = energy;
-          yaqdc = traceAnalyzer(yatrace);
-        }
-        else if(channel==3 && module==1){ 
-          ybt = *trace;
-          double hold =0;
-          for(int i=0;i<ybt.size();i++){
-              hold = (double) ybt[i];
-              if(hold>ybtm) ybtm = hold;
-              ybtrace.push_back(hold);
-            }
-          yb = energy;
-          ybqdc = traceAnalyzer(ybtrace);
+            //sigmaone = baselineVals.second;
         }
     }
-    if((ione>0 && itwo>0) || maxvalone>4000){
-      std::tuple<double,double,double> result = pcfdAnalyzer(traceone,0.1);
-      //phaseone = 4*fittingAnalyzer(traceone);
-      phaseone = 4*(std::get<0>(result));
-      tmaxone = std::get<1>(result);
-      slopeone = std::get<2>(result);
-      cfdTimeone += phaseone;
-      result = pcfdAnalyzer(tracetwo,0.1);
-      phasetwo = 4*(std::get<0>(result));
-      tmaxtwo = std::get<1>(result);
-      slopetwo = std::get<2>(result);
-      cfdTimetwo += phasetwo;
-      tdiff = cfdTimeone-phaseone-cfdTimetwo+phaseone;
-      ecaltwo = 0.09369787313*energytwo-1.639424969;
-      pair<double,double> posq = position(xaqdc,xbqdc,yaqdc,ybqdc);
-      pair<double,double> post = position(xa,xb,ya,yb);
-      xposq = posq.first;
-      yposq = posq.second;
-      xpost = post.first;
-      ypost = post.second;
-      //plot1->Fill(tdiff);
-      //energy->Fill(energyone,energytwo);
-      //phase->Fill(phaseone,phasetwo);
+    if(maxvalone>4000){
+      normalizeTrace(traceone);
+      //vector<double> beforepile = traceone;
+      //if(randGenerator->Rndm()<percentPileup && lasttrace.size()>0){
+      //  pileup = 1;
+      //  phase = randGenerator->Rndm()*(phaseHigh-phaseLow)+phaseLow;
+      //  createPileup(lasttrace,traceone,phase);
+      //}
+      //lasttrace = beforepile;
+      //normalizeTrace(traceone);
       timing->Fill();
     }
     eventNum++;
   }
   timing->Write();
-  //plot1->Write();
-  //phase->Write();
-  //energy->Write();
   cout<<endl;
 }
+
+////////// Function Definitions ////////////
+void createPileup(vector<double> lasttrace, vector<double> &trace, int phase){
+  double scale = randGenerator->Rndm()+0.5; // Allows the lasttrace to be scaled by 0.5x up to 1.5x
+  for(int i=phase;i<trace.size();i++){
+    trace.at(i) += lasttrace.at(i-phase);
+  }
+  return;
+}
+
+void normalizeTrace(vector<double> &trace){
+  double baseline = baselineCalc(trace).first;
+  auto it = max_element(std::begin(trace), std::end(trace));
+  double maxVal = *it;
+  for(int i=0;i<trace.size();i++){
+    trace.at(i) = (trace.at(i)-baseline)/maxVal;
+  }
+  return;
+}
+
 
 std::tuple<double,double,double> pcfdAnalyzer(vector<double> trace, double frac){
   int maxPos=0;

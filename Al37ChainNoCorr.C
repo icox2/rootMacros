@@ -1,0 +1,30 @@
+{
+    TChain *tree = new TChain("mergedBeta");
+      tree->Add("WithoutImageCorrection/crate2_run_0239_beta_ion_correlated_Al37CUT.root");
+      tree->Add("WithoutImageCorrection/crate2_run_0270_beta_ion_correlated_Al37CUT.root");
+      tree->Add("WithoutImageCorrection/crate2_run_0269_beta_ion_correlated_Al37CUT.root");
+      tree->Add("WithoutImageCorrection/crate2_run_0299_beta_ion_correlated_Al37CUT.root");
+      tree->Add("WithoutImageCorrection/crate2_run_0298_beta_ion_correlated_Al37CUT.root");
+      tree->Add("WithoutImageCorrection/crate2_run_0300_beta_ion_correlated_Al37CUT.root");
+      tree->Add("WithoutImageCorrection/crate2_run_0301_beta_ion_correlated_Al37CUT.root");
+      tree->Add("WithoutImageCorrection/crate2_run_0304_beta_ion_correlated_Al37CUT.root");
+      tree->Add("WithoutImageCorrection/crate2_run_0302_beta_ion_correlated_Al37CUT.root");
+      tree->Add("WithoutImageCorrection/crate2_run_0303_beta_ion_correlated_Al37CUT.root");
+      tree->Add("WithoutImageCorrection/crate2_run_0308_beta_ion_correlated_Al37CUT.root");
+      tree->Add("WithoutImageCorrection/crate2_run_0312_beta_ion_correlated_Al37CUT.root");
+      tree->Add("WithoutImageCorrection/crate2_run_0309_beta_ion_correlated_Al37CUT.root");
+      tree->Add("WithoutImageCorrection/crate2_run_0310_beta_ion_correlated_Al37CUT.root");
+      tree->Add("WithoutImageCorrection/crate2_run_0311_beta_ion_correlated_Al37CUT.root");
+      tree->Add("WithoutImageCorrection/crate2_run_0313_beta_ion_correlated_Al37CUT.root");
+      tree->Add("WithoutImageCorrection/crate2_run_0315_beta_ion_correlated_Al37CUT.root");
+      tree->Add("WithoutImageCorrection/crate2_run_0314_beta_ion_correlated_Al37CUT.root");
+      tree->Add("WithoutImageCorrection/crate2_run_0320_beta_ion_correlated_Al37CUT.root");
+      tree->Add("WithoutImageCorrection/crate2_run_0321_beta_ion_correlated_Al37CUT.root");
+      tree->Add("WithoutImageCorrection/crate2_run_0322_beta_ion_correlated_Al37CUT.root");
+      tree->Add("WithoutImageCorrection/crate2_run_0324_beta_ion_correlated_Al37CUT.root");
+      tree->Add("WithoutImageCorrection/crate2_run_0323_beta_ion_correlated_Al37CUT.root");
+      tree->Add("WithoutImageCorrection/crate2_run_0325_beta_ion_correlated_Al37CUT.root");
+      tree->Add("WithoutImageCorrection/crate2_run_0326_beta_ion_correlated_Al37CUT.root");
+      tree->Add("WithoutImageCorrection/crate2_run_0239-2_beta_ion_correlated_Al37CUT.root");
+      tree->Add("WithoutImageCorrection/crate2_run_0239-1_beta_ion_correlated_Al37CUT.root");
+}
